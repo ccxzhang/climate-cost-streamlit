@@ -14,18 +14,24 @@ cc_file = os.getcwd() + "/data/cc_cleaned.csv"
 shp_file = os.getcwd() + "/data/gadm_pacific/"
 info_file = os.getcwd() + "/data/country_info.csv"
 
+
 @st.cache_data
 def load_data(path) -> pd.DataFrame:
     df = pd.read_csv(path).drop("Unnamed: 0", axis=1)
     return df
 
 
-df = load_data(cc_file) 
+df = load_data(cc_file)
 info = load_data(info_file)
 shp = gpd.read_file(shp_file)
 
-scenario_list = df["scenario"].unique().tolist()
-adaptation_list = df["case"].unique().tolist()
+
+## Specify options
+time_options = df["year"].unique().tolist()
+scenario_list = ["ssp245_medium", "High", "Low"]
+adaptation_list = ["noAdaptation", "optimalfixed", "protect100", "retreat100"]
+# default_sea_level_index = scenario_list.index("ssp245_medium")
+# scenario_list = scenario_list[default_sea_level_index:] + scenario_list[:default_sea_level_index]
 
 # Header and
 st.header("Climate Costs Map")
@@ -34,7 +40,7 @@ left_panel, right_panel = st.columns([0.25, 0.75])
 with left_panel:
     select_time = st.select_slider(
         "Which Year",
-        options=[2030, 2050, 2070, 2090])
+        options=time_options)
 
     # Newspaper multi-selection widget
     adaptation_option = st.selectbox(
@@ -43,7 +49,7 @@ with left_panel:
 
     ssp_option = st.selectbox(
         "Socioeconomic Growth Model",
-        ("SSP2", "SSP1", "SSP3", "SSP4", "SSP5")
+        ["SSP2"]
     )
 
     sea_level_option = st.selectbox(
@@ -51,7 +57,6 @@ with left_panel:
         scenario_list,
         label_visibility="visible"
     )
-    on = st.toggle('Display Raw Data')
 
 # Apply Filter
 df = df[(df.year == select_time) & (df.case == adaptation_option) & (
@@ -61,34 +66,30 @@ df = df.merge(shp[["GID_1", "geometry"]], how="left",
 df = df.merge(info, how="left", on="adm1")
 gdf = gpd.GeoDataFrame(df)
 select_cols_df = [col for col in df.columns if col not in
-                  ["geometry", "GID_1"]
-]
-
-max_total_cost = df["total_cost"].max()
+                  ["geometry", "GID_1"]]
 
 
+# Create Map
 m = folium.Map(location=(4, 160), zoom_start=4)
-for _, r in gdf.iterrows():
+gdf.explore(
+    column='total_cost',
+    tooltip=['total_cost_num', "K_2019", 'inundation', 'protection', 'relocation', 'stormCapital', 'stormPopulation', 'wetland'],
+    cmap="YlOrRd",
+    m=m,
+    scheme='equalinterval',
+    popup=True,
+    legend_kwds=dict(colorbar=False, caption='Total Cost', interval=True, fmt="{:,.0f}")
+)
 
-    gj = gpd.GeoSeries(r["geometry"]).simplify(tolerance=0.001).to_json()
-    fillOpacity = r["total_cost"]/max_total_cost
-    folium.GeoJson(data=gj,
-                   style_function=lambda x, fillOpacity=fillOpacity: {
-                       "fillColor": "red",
-                       "fillOpacity": fillOpacity,
-                       "weight": 1}).add_to(m)
-    folium.CircleMarker(
-        location=[r["geometry"].centroid.y, r["geometry"].centroid.x],
-        radius=1,
-        color="blue",
-        popup=folium.Popup((
-            "Total Cost: ${cost}<br>"
-            "GDP in 2019: {gdp}<br>").format(cost=str(r["total_cost_num"]), gdp=str(r["K_2019"])),
-            min_width=200,
-            max_width=200)).add_to(m)
+# folium.GeoJson(data=gdf,
+#                style_function=lambda x: {
+#                    "fillColor": "red",
+#                    "fillOpacity": 0.5,
+#                    "weight": 1},
+#                tooltip=folium.GeoJsonTooltip(fields=["total_cost_num", "K_2019_num"],
+#                                              aliases=["Total Costs",
+#                                                       "GDP in 2019"],
+#                                              labels=True)).add_to(m)
 
 with right_panel:
     folium_static(m, width=1085)
-    if on:
-        st.write(df[select_cols_df], width=1000)
-    
