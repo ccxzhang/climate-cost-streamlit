@@ -7,13 +7,10 @@ from streamlit_folium import st_folium, folium_static
 import geopandas as gpd
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from Main import BindColormap
-import mapclassify
-from branca.colormap import linear
 
 
 # Specify the filepath and read
-cc_file = os.getcwd() + "/data/cc_cleaned.csv"
+cc_file = os.getcwd() + "/data/cc_trimmed.csv"
 shp_file = os.getcwd() + "/data/gadm_pacific/"
 info_file = os.getcwd() + "/data/country_info.csv"
 
@@ -22,7 +19,6 @@ info_file = os.getcwd() + "/data/country_info.csv"
 def load_data(path) -> pd.DataFrame:
     df = pd.read_csv(path).drop("Unnamed: 0", axis=1)
     return df
-
 
 df = load_data(cc_file)
 info = load_data(info_file)
@@ -72,83 +68,84 @@ select_cols_df = [col for col in df.columns if col not in
                   ["geometry", "GID_1"]]
 gdf["gdp_pcp"] = gdf["K_2019"] / gdf["pop_2019"]
 
+
+
 # Create Map
 m = folium.Map(location=(4, 160), zoom_start=4)
 
-cost_interval = mapclassify.EqualInterval(gdf["total_cost"]).bins.tolist()
-cm1 = linear.YlOrRd_05.scale(0, gdf["total_cost"].max())
-cm1.to_step(index=cost_interval)
+# cost_interval = mapclassify.EqualInterval(gdf["total_cost"]).bins.tolist()
+# cm1 = linear.YlOrRd_05.scale(0, gdf["total_cost"].max())
+# cm1.to_step(index=cost_interval)
+# cl = folium.GeoJson(data=gdf,
+#                     style_function=lambda x: {
+#                         "fillColor": cm1(x["properties"]["total_cost"]),
+#                         "fillOpacity": 0.5,
+#                         "weight": 1},
+#                     popup=folium.GeoJsonPopup(fields=["adm1", "total_cost", "inundation"],
+#                                               aliases=["Admin1", "Total Cost", "Inundation"]),
+#                     tooltip=folium.GeoJsonTooltip(fields=["total_cost", "K_2019", 'protection', 'relocation', 'stormCapital', 'stormPopulation', 'wetland'],
+#                                                   aliases=["Total Costs", "GDP in 2019", "Protection",
+#                                                            "Relocation", "Storm Capital", "Storm Population", " Wetlad"],
+#                                                   labels=True),
+#                     name="Climate Change Costs")
+# gdp_interval = mapclassify.EqualInterval(gdf["gdp_pcp"]).bins.tolist()
+# cm2 = linear.YlGn_05.scale(0, gdf["gdp_pcp"].max())
+# cm2.to_step(index=gdp_interval)
+# gl = folium.GeoJson(data=gdf,
+#                     style_function=lambda x: {
+#                         "fillColor": cm2(x["properties"]["gdp_pcp"]),
+#                         "fillOpacity": 1,
+#                         "weight": 1},
+#                     # popup=folium.GeoJsonPopup(fields=["adm1", "total_cost", "inundation"],
+#                     #                           aliases=["Admin1","Total Cost", "Inundation"]),
+#                     tooltip=folium.GeoJsonTooltip(fields=["adm1", "gdp_pcp"],
+#                                                   aliases=[
+#                                                       "Admin1", "GDP per Capita in 2019"],
+#                                                   labels=True),
+#                     name="GDP Per Capita",
+#                     overlay=False)
 
-cl = folium.GeoJson(data=gdf,
-                    style_function=lambda x: {
-                        "fillColor": cm1(x["properties"]["total_cost"]),
-                        "fillOpacity": 0.5,
-                        "weight": 1},
-                    popup=folium.GeoJsonPopup(fields=["adm1", "total_cost", "inundation"],
-                                              aliases=["Admin1","Total Cost", "Inundation"]),
-                    tooltip=folium.GeoJsonTooltip(fields=["total_cost", "K_2019", 'protection', 'relocation', 'stormCapital', 'stormPopulation', 'wetland'],
-                                                  aliases=["Total Costs", "GDP in 2019", "Protection","Relocation", "Storm Capital", "Storm Population"," Wetlad"],
-                                                  labels=True),
-                    name="Climate Change Costs")
-
-gdp_interval = mapclassify.EqualInterval(gdf["gdp_pcp"]).bins.tolist()
-cm2 = linear.YlGn_05.scale(0, gdf["gdp_pcp"].max())
-cm2.to_step(index=gdp_interval)
-
-gl = folium.GeoJson(data=gdf,
-                    style_function=lambda x: {
-                        "fillColor": cm2(x["properties"]["gdp_pcp"]),
-                        "fillOpacity": 1,
-                        "weight": 1},
-                    # popup=folium.GeoJsonPopup(fields=["adm1", "total_cost", "inundation"],
-                    #                           aliases=["Admin1","Total Cost", "Inundation"]),
-                    tooltip=folium.GeoJsonTooltip(fields=["adm1", "gdp_pcp"],
-                                                  aliases=["Admin1", "GDP per Capita in 2019"],
-                                                  labels=True),
-                    name="GDP Per Capita",
-                    overlay=False) 
-
-m.add_child(cl).add_child(gl)
-m.add_child(folium.LayerControl())
-m.add_child(cm1).add_child(cm2)
-m.add_child(BindColormap(cl, cm1).add_child(BindColormap(gl, cm2)))
-
+# m.add_child(cl).add_child(gl)
+# m.add_child(folium.LayerControl())
+# m.add_child(cm1).add_child(cm2)
+# m.add_child(BindColormap(cl, cm1).add_child(BindColormap(gl, cm2)))
 
 
-# gdf.explore(
-#     tiles="OpenStreetMap",
-#     column='total_cost',
-#     tooltip=['total_cost_num', "K_2019", 'inundation', 'protection',
-#              'relocation', 'stormCapital', 'stormPopulation', 'wetland'],
-#     cmap="YlOrRd",
-#     scheme='equalinterval',
-#     m=m,
-#     popup=['total_cost_num', "K_2019", 'inundation', 'protection',
-#            'relocation', 'stormCapital', 'stormPopulation', 'wetland'],
-#     legend=True,
-#     legend_kwds=dict(colorbar=True, caption='Total Cost', interval=True, fmt="{:,.0f}",
-#                      legend_position='topleft'),
-#     name="Climate Change Costs",
-#     overlay=True
-# )
+gdf.explore(
+    tiles="OpenStreetMap",
+    column='total_cost',
+    tooltip=['total_cost_num', "K_2019", 'inundation', 'protection',
+             'relocation', 'stormCapital', 'stormPopulation', 'wetland'],
+    cmap="YlOrRd",
+    scheme='equalinterval',
+    m=m,
+    popup=['total_cost_num', "K_2019", 'inundation', 'protection',
+           'relocation', 'stormCapital', 'stormPopulation', 'wetland'],
+    legend=True,
+    legend_kwds=dict(colorbar=True, caption='Total Cost', interval=True, fmt="{:,.0f}",
+                     legend_position='topleft'),
+    name="Climate Change Costs",
+    overlay=True,
+    show=False
+)
 
-# gdf.explore(
-#     m=m,
-#     tiles="OpenStreetMap",
-#     column='gdp_pcp',
-#     tooltip=["adm1", 'total_cost_num', "gdp_pcp"],
-#     cmap="PuBu",
-#     scheme='equalinterval',
-#     popup=False,
-#     legend=True,
-#     legend_kwds=dict(colorbar=True, caption='GDF Per Capita', interval=True, fmt="{:,.0f}",
-#                      legend_position='topright'),
-#     name="GDF Per Capita",
-#     overlay=False
-# )
+gdf.explore(
+    m=m,
+    tiles="OpenStreetMap",
+    column='gdp_pcp',
+    tooltip=["adm1", 'total_cost_num', "gdp_pcp"],
+    cmap="PuBu",
+    scheme='equalinterval',
+    popup=False,
+    legend=True,
+    legend_kwds=dict(colorbar=True, caption='GDF Per Capita', interval=True, fmt="{:,.0f}",
+                     legend_position='topright'),
+    name="GDF Per Capita",
+    overlay=False
+)
 
-# folium.LayerControl().add_to(m)
+folium.LayerControl().add_to(m)
 
 
 with right_panel:
-    folium_static(m, width=1085)
+    folium_static(m, width=1050)
