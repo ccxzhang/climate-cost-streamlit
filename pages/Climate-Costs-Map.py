@@ -24,6 +24,12 @@ df = load_data(cc_file)
 info = load_data(info_file)
 shp = gpd.read_file(shp_file)
 
+@st.cache_data
+def merge_info(_info_data, _geo_data):
+    info_data = info.merge(shp[["GID_1", "geometry"]], how="left",
+                    left_on="adm1", right_on="GID_1")
+    return info_data
+info = merge_info(info, shp)
 
 # Specify options
 time_options = df["year"].unique().tolist()
@@ -60,14 +66,9 @@ with left_panel:
 # Apply Filter
 df = df[(df.year == select_time) & (df.case == adaptation_option) & (
     df.ssp == ssp_option) & (df.scenario == sea_level_option)].reset_index(drop=True)
-df = df.merge(shp[["GID_1", "geometry"]], how="left",
-              left_on="adm1", right_on="GID_1")
 df = df.merge(info, how="left", on="adm1")
 gdf = gpd.GeoDataFrame(df)
-select_cols_df = [col for col in df.columns if col not in
-                  ["geometry", "GID_1"]]
-gdf["gdp_pcp"] = gdf["K_2019"] / gdf["pop_2019"]
-
+gdf["gdp_pcp"] = gdf["K_2019"]/gdf["pop_2019"]
 
 
 # Create Map
@@ -141,7 +142,7 @@ gdf.explore(
     legend_kwds=dict(colorbar=True, caption='GDF Per Capita', interval=True, fmt="{:,.0f}",
                      legend_position='topright'),
     name="GDF Per Capita",
-    overlay=False
+    overlay=True
 )
 
 folium.LayerControl().add_to(m)
