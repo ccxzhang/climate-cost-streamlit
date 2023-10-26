@@ -7,6 +7,7 @@ from streamlit_folium import st_folium, folium_static
 import geopandas as gpd
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+import pydeck as pdk
 
 
 # Specify the filepath and read
@@ -62,6 +63,8 @@ with left_panel:
         scenario_list,
         label_visibility="visible"
     )
+
+    gdp_control = st.toggle("Show GDF Per Capita")
 
 # Apply Filter
 df = df[(df.year == select_time) & (df.case == adaptation_option) & (
@@ -127,26 +130,27 @@ gdf.explore(
                      legend_position='topleft'),
     name="Climate Change Costs",
     overlay=True,
-    show=False
+    show=True
 )
 
-gdf.explore(
-    m=m,
-    tiles="OpenStreetMap",
-    column='gdp_pcp',
-    tooltip=["adm1", 'total_cost_num', "gdp_pcp"],
-    cmap="PuBu",
-    scheme='equalinterval',
-    popup=False,
-    legend=True,
-    legend_kwds=dict(colorbar=True, caption='GDF Per Capita', interval=True, fmt="{:,.0f}",
-                     legend_position='topright'),
-    name="GDF Per Capita",
-    overlay=True
-)
+if gdp_control:
+    gdf.explore(
+        m=m,
+        tiles="OpenStreetMap",
+        column='gdp_pcp',
+        tooltip=["adm1", 'total_cost_num', "gdp_pcp"],
+        cmap="PuBu",
+        scheme='equalinterval',
+        popup=False,
+        legend=True,
+        legend_kwds=dict(colorbar=True, caption='GDF Per Capita', interval=True, fmt="{:,.0f}",
+                        legend_position='topright'),
+        name="GDF Per Capita",
+        overlay=True
+    )
 
 folium.LayerControl().add_to(m)
-
+ 
 
 with right_panel:
-    folium_static(m, width=1050)
+    folium_static(m, width=1085)
