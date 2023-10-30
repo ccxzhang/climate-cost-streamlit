@@ -7,7 +7,6 @@ from streamlit_folium import st_folium, folium_static
 import geopandas as gpd
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-import pydeck as pdk
 
 
 # Specify the filepath and read
@@ -21,15 +20,19 @@ def load_data(path) -> pd.DataFrame:
     df = pd.read_csv(path).drop("Unnamed: 0", axis=1)
     return df
 
+
 df = load_data(cc_file)
 info = load_data(info_file)
 shp = gpd.read_file(shp_file)
 
+
 @st.cache_data
 def merge_info(_info_data, _geo_data):
     info_data = info.merge(shp[["GID_1", "geometry"]], how="left",
-                    left_on="adm1", right_on="GID_1")
+                           left_on="adm1", right_on="GID_1")
     return info_data
+
+
 info = merge_info(info, shp)
 
 # Specify options
@@ -54,7 +57,7 @@ with left_panel:
         adaptation_list)
 
     ssp_option = st.selectbox(
-        "Socioeconomic Growth Model",
+        "Shared Socioeconomic Pathways",
         ["SSP2"]
     )
 
@@ -144,13 +147,13 @@ if gdp_control:
         popup=False,
         legend=True,
         legend_kwds=dict(colorbar=True, caption='GDF Per Capita', interval=True, fmt="{:,.0f}",
-                        legend_position='topright'),
+                         legend_position='topright'),
         name="GDF Per Capita",
         overlay=True
     )
 
 folium.LayerControl().add_to(m)
- 
+
 
 with right_panel:
     folium_static(m, width=1085)
