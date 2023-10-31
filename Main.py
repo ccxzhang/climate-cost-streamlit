@@ -15,10 +15,11 @@ st.set_page_config(layout="wide",
 st.header("Pacific Observatory")
 
 
-st.sidebar.title("See More:")
 st.sidebar.info(
     """
-    [Page](https://worldbank.github.io/pacific-observatory/) | [GitHub Repo](https://worldbank.github.io/pacific-observatory/)
+    - See More:
+    [Page](https://worldbank.github.io/pacific-observatory/) | [GitHub Repo](https://github.com/worldbank/pacific-observatory)
+
     """
 )
 

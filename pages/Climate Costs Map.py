@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
 
+
+
 # Specify the filepath and read
 cc_file = os.getcwd() + "/data/cc_trimmed.csv"
 shp_file = os.getcwd() + "/data/gadm_pacific/"
@@ -45,6 +47,14 @@ adaptation_list = ["noAdaptation", "optimalfixed", "protect100", "retreat100"]
 # Header and
 st.header("Climate Costs Map")
 left_panel, right_panel = st.columns([0.25, 0.75])
+
+
+st.sidebar.info(
+    """
+    See More:
+    [Page](https://worldbank.github.io/pacific-observatory/) | [GitHub Repo](https://github.com/worldbank/pacific-observatory)
+    """
+)
 
 with left_panel:
     select_time = st.select_slider(

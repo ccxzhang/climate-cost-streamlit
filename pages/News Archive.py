@@ -8,6 +8,14 @@ import random
 # Header and
 st.header("Solomon Islands News Archive")
 
+
+
+st.sidebar.info(
+    """
+    See More:
+    [Page](https://worldbank.github.io/pacific-observatory/) | [GitHub Repo](https://github.com/worldbank/pacific-observatory)
+    """
+)
 # Datetime selection widget
 start = datetime.date(2007, 4, 14)
 end = datetime.datetime.now()
